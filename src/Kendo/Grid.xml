@@ -1,0 +1,32 @@
+<widget id="Kendo.widget.Grid" needsEntityContext="false" xmlns="http://www.mendix.com/widget/1.0/">
+    <name>Kendo Grid</name>
+    <description>Dummy widget</description>
+    <icon/>
+    <properties>
+        <property key="entity" type="entity" isPath="no" allowNonPersistableEntities="false" required="true">
+          <caption>Entity</caption>
+          <category>General</category>
+          <description>The Entity to show in the Grid</description>
+        </property>
+        <property key="columns" type="object" isList="true" required="true">
+          <caption>Columns</caption>
+          <category>General</category>
+          <description></description>
+          <properties>
+            <property key="caption" type="string" required="true">
+              <caption>Caption</caption>
+              <category>Data Source</category>
+              <description></description>
+            </property>
+            <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="true">
+              <caption>Attribute</caption>
+              <category>Data Source</category>
+              <description></description>
+              <attributeTypes>
+                <attributeType name="String" />
+              </attributeTypes>
+            </property>
+          </properties>
+        </property>
+    </properties>
+</widget>
