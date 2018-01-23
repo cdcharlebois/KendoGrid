@@ -15,16 +15,30 @@
           <properties>
             <property key="caption" type="string" required="true">
               <caption>Caption</caption>
-              <category>Data Source</category>
+              <category>General</category>
               <description></description>
             </property>
-            <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="true">
+            <property key="cellType" type="enumeration" defaultValue="attr" required="true">
+              <caption>Cell Type</caption>
+              <category>General</category>
+              <description></description>
+              <enumerationValues>
+                <enumerationValue key="attr">Attribute</enumerationValue>
+                <enumerationValue key="page">Page</enumerationValue>
+              </enumerationValues>
+            </property>
+            <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="false">
               <caption>Attribute</caption>
-              <category>Data Source</category>
+              <category>Attribute</category>
               <description></description>
               <attributeTypes>
                 <attributeType name="String" />
               </attributeTypes>
+            </property>
+            <property key="form" type="form" required="false">
+              <caption>Page</caption>
+              <category>Page</category>
+              <description></description>
             </property>
           </properties>
         </property>
