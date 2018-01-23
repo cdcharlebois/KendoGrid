@@ -6,6 +6,8 @@ import {
 import $ from 'jquery';
 window.$ = $;
 import '@progress/kendo-ui';
+import 'file-loader';
+import 'font-loader';
 import './Grid.scss';
 import './Kendo.common.min.scss';
 import './Kendo.default.min.scss';
@@ -96,14 +98,14 @@ export default defineWidget('Grid', false, {
                     const path = column.attribute.split("/");
                     mx.data.get({
                         guid: mxobj.getGuid(),
-                        path: path[ 0 ],
+                        path: path[0],
                         callback: obj => {
-                            row[ column.caption ] = obj[ 0 ].get(path[ 2 ]);
+                            row[column.caption] = obj[0].get(path[2]);
                             resolve();
                         },
                     });
                 } else {
-                    row[ column.caption ] = mxobj.get(column.attribute);
+                    row[column.caption] = mxobj.get(column.attribute);
                     resolve();
                 }
             });

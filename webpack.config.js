@@ -122,48 +122,38 @@ const webpackConfig = {
                 test: /\.template\.html$/,
                 use: 'raw-loader'
             },
-            // {
-            //     test: /\.(jpe?g|png|gif|svg)$/i,
-            //     loader: [
-            //         'url-loader?limit=10000',
-            //         {
-            //             loader: 'img-loader',
-            //             options: {
-            //                 // enabled: process.env.NODE_ENV === 'production',
-            //                 gifsicle: {
-            //                     interlaced: false
-            //                 },
-            //                 mozjpeg: {
-            //                     progressive: true,
-            //                     arithmetic: false
-            //                 },
-            //                 optipng: true, // disabled
-            //                 pngquant: {
-            //                     floyd: 0.5,
-            //                     speed: 2
-            //                 },
-            //                 svgo: {
-            //                     plugins: [{
-            //                             removeTitle: true
-            //                         },
-            //                         {
-            //                             convertPathData: false
-            //                         }
-            //                     ]
-            //                 }
-            //             }
-            //         }
-            //     ]
-            // }
             {
-                test: /\.(jpe?g|png|gif|svg|ttf|eot|woff)$/i,
-                use: [{
-                    loader: 'file-loader',
-                    options: {
-                        outputPath: `${packageName}/${widgetFolder}/ui/`,
-                        publicPath: `${packageName}/${widgetFolder}/ui/` // <-- Fix this name so it will point to the widgets folder ui. Tricky in Mendix
+                test: /\.(jpe?g|png|gif|svg)$/i,
+                loader: [
+                    'url-loader?limit=10000',
+                    {
+                        loader: 'img-loader',
+                        options: {
+                            // enabled: process.env.NODE_ENV === 'production',
+                            gifsicle: {
+                                interlaced: false
+                            },
+                            mozjpeg: {
+                                progressive: true,
+                                arithmetic: false
+                            },
+                            optipng: true, // disabled
+                            pngquant: {
+                                floyd: 0.5,
+                                speed: 2
+                            },
+                            svgo: {
+                                plugins: [{
+                                        removeTitle: true
+                                    },
+                                    {
+                                        convertPathData: false
+                                    }
+                                ]
+                            }
+                        }
                     }
-                }]
+                ]
             }
         ]
     },
