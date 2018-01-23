@@ -6,11 +6,11 @@ import {
 import $ from 'jquery';
 window.$ = $;
 import '@progress/kendo-ui';
-import 'file-loader';
-import 'font-loader';
+// import 'file-loader';
+// import 'font-loader';
 import './Grid.scss';
-import './Kendo.common.min.scss';
-import './Kendo.default.min.scss';
+// import './Kendo.common.min.scss';
+// import './Kendo.default.min.scss';
 
 
 export default defineWidget('Grid', false, {
