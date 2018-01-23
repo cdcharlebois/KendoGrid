@@ -104,10 +104,6 @@ const webpackConfig = {
     },
     module: {
         loaders: [{
-                test: /\.(eot|ttf|woff|woff2)$/,
-                loader: 'font-loader'
-            },
-            {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
                 loader: [
