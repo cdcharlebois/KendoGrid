@@ -83,7 +83,7 @@
         "no-octal-escape": 2,
         "no-octal": 2,
         "no-param-reassign": [2, {
-            "props": true
+            "props": false
         }],
         "no-process-env": 0,
         "no-proto": 2,
@@ -110,7 +110,7 @@
             "hoist": "all"
         }],
         "no-undef-init": 2,
-        "no-undef": 2,
+        "no-undef": 0,
         "no-undefined": 2,
         "no-unused-vars": 2,
         "no-use-before-define": [2, "nofunc"],
