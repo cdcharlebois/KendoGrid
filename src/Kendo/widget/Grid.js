@@ -18,6 +18,7 @@ export default defineWidget('Grid', false, {
     //modeler
     entity: null,
     columns: null,
+    pageSize: null,
 
     constructor() {
         this.log = log.bind(this);
@@ -40,7 +41,7 @@ export default defineWidget('Grid', false, {
                     sortable: true,
                     pageable: {
                         // refresh: true,
-                        pageSize: 5,
+                        pageSize: self.pageSize,
                         // buttonCount: 5,
                     },
                     columns: columnSettings,
@@ -83,7 +84,7 @@ export default defineWidget('Grid', false, {
         return this.columns.map(column => {
             return {
                 template: "page" === column.cellType ? "<div class='mx-formcell' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : undefined,
-                field: column.caption,
+                field: column.caption.split(" ").join("_"),
                 title: column.caption,
             };
         });
@@ -93,7 +94,7 @@ export default defineWidget('Grid', false, {
         return new Promise((resolve, reject) => {
             const dataset = [];
             mx.data.get({
-                xpath: "//MyFirstModule.Contact",
+                xpath: "//" + this.entity,
                 callback: objs => {
                     const allPromises = objs.map(mxobj => {
                         return new Promise(resolveInner => {
@@ -125,26 +126,26 @@ export default defineWidget('Grid', false, {
     getPromisesForRow(row, mxobj) {
         return this.columns.map(column => {
             return new Promise(resolve => {
-                if ("attr" === column.cellType) {
-                    if (-1 < column.attribute.indexOf("/")) {
-                        // get from association
-                        const path = column.attribute.split("/");
-                        mx.data.get({
-                            guid: mxobj.getGuid(),
-                            path: path[ 0 ],
-                            callback: obj => {
-                                row[ column.caption ] = obj[ 0 ].get(path[ 2 ]);
-                                resolve();
-                            },
-                        });
-                    } else {
-                        row[ column.caption ] = mxobj.get(column.attribute);
-                        resolve();
-                    }
+                // if ("attr" === column.cellType) {
+                if (-1 < column.attribute.indexOf("/")) {
+                    // get from association
+                    const path = column.attribute.split("/");
+                    mx.data.get({
+                        guid: mxobj.getGuid(),
+                        path: path[ 0 ],
+                        callback: obj => {
+                            row[ column.caption.split(" ").join("_") ] = obj[ 0 ].get(path[ 2 ]);
+                            resolve();
+                        },
+                    });
                 } else {
-                    // the pages are rendered after the grid is fully loaded so nothing to do here.
+                    row[ column.caption.split(" ").join("_") ] = mxobj.get(column.attribute);
                     resolve();
                 }
+                // } else {
+                //     // the pages are rendered after the grid is fully loaded so nothing to do here.
+                //     resolve();
+                // }
 
             });
         });

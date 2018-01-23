@@ -27,20 +27,25 @@
                 <enumerationValue key="page">Page</enumerationValue>
               </enumerationValues>
             </property>
-            <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="false">
+            <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="true">
               <caption>Attribute</caption>
-              <category>Attribute</category>
-              <description></description>
+              <category>General</category>
+              <description>Even if you choose to do a "page" type cell, still choose an attribute so we can sort it properly.</description>
               <attributeTypes>
                 <attributeType name="String" />
               </attributeTypes>
             </property>
             <property key="form" type="form" required="false">
               <caption>Page</caption>
-              <category>Page</category>
-              <description></description>
+              <category>General</category>
+              <description>Use this for a custom cell rendering.</description>
             </property>
           </properties>
+        </property>
+        <property key="pageSize" type="integer" defaultValue="5" required="true">
+         <caption>Page Size</caption>
+          <category>General</category>
+          <description>Number of Records per Page</description>
         </property>
     </properties>
 </widget>
