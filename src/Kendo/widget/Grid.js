@@ -6,9 +6,9 @@ import {
 import $ from 'jquery';
 window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
 import '@progress/kendo-ui';
-import './Grid.scss';
-import './Kendo.common.min.scss';
-import './Kendo.default.min.scss';
+import './ui/Grid.scss';
+import './ui/Kendo.common.min.scss';
+import './ui/Kendo.default.min.scss';
 
 
 export default defineWidget('Grid', false, {
@@ -39,14 +39,15 @@ export default defineWidget('Grid', false, {
                     groupable: true,
                     sortable: true,
                     pageable: {
-                        refresh: true,
-                        pageSizes: true,
-                        buttonCount: 5,
+                        // refresh: true,
+                        pageSize: 5,
+                        // buttonCount: 5,
                     },
                     columns: columnSettings,
                     filter: self.loadPages,
                     group: self.loadPages,
                     sort: self.loadPages,
+                    page: self.loadPages,
                 });
                 this.loadPages();
             });
@@ -141,17 +142,7 @@ export default defineWidget('Grid', false, {
                         resolve();
                     }
                 } else {
-                    // render a page.
-                    // const node = document.querySelector(`.mx-colcell-${column.caption}-${mxobj.getGuid()}`);
-                    // const ctx = new mendix.lib.MxContext();
-                    // ctx.setTrackObject(mxobj);
-                    // mx.ui.openForm(column.form, {
-                    //     domNode: node, // something
-                    //     context: ctx,
-                    //     callback: () => {
-                    //         resolve();
-                    //     },
-                    // });
+                    // the pages are rendered after the grid is fully loaded so nothing to do here.
                     resolve();
                 }
 

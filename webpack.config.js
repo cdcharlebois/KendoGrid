@@ -156,16 +156,14 @@ const webpackConfig = {
             //     ]
             // },
             {
-                test: /\.(jpe?g|png|gif|svg|ttf|eot)$/i,
-                use: [
-                    {
-                        loader:  'file-loader',
-                        options: {
-                            outputPath: `${packageName}/${widgetFolder}/ui/`,
-                            publicPath: `${packageName}/${widgetFolder}/ui/` // <-- Fix this name so it will point to the widgets folder ui. Tricky in Mendix
-                        }
+                test: /\.(jpe?g|png|gif|svg|ttf|eot|woff)$/i,
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        outputPath: `${packageName}/${widgetFolder}/ui/`,
+                        publicPath: `./` // <-- Fix this name so it will point to the widgets folder ui. Tricky in Mendix
                     }
-                ]
+                }]
             }
         ]
     },
