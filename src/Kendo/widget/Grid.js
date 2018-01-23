@@ -3,11 +3,9 @@ import {
     log,
     runCallback,
 } from 'widget-base-helpers';
-import $ from 'jquery';
-window.$ = $;
+// import $ from 'jquery';
+// window.$ = $; <-- Can we please remove jQuery? Pretty please? ;-)
 import '@progress/kendo-ui';
-import 'file-loader';
-import 'font-loader';
 import './Grid.scss';
 import './Kendo.common.min.scss';
 import './Kendo.default.min.scss';

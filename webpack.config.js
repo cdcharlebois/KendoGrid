@@ -122,35 +122,47 @@ const webpackConfig = {
                 test: /\.template\.html$/,
                 use: 'raw-loader'
             },
+            // {
+            //     test: /\.(jpe?g|png|gif|svg)$/i,
+            //     loader: [
+            //         'url-loader?limit=10000',
+            //         {
+            //             loader: 'img-loader',
+            //             options: {
+            //                 // enabled: process.env.NODE_ENV === 'production',
+            //                 gifsicle: {
+            //                     interlaced: false
+            //                 },
+            //                 mozjpeg: {
+            //                     progressive: true,
+            //                     arithmetic: false
+            //                 },
+            //                 optipng: true, // disabled
+            //                 pngquant: {
+            //                     floyd: 0.5,
+            //                     speed: 2
+            //                 },
+            //                 svgo: {
+            //                     plugins: [{
+            //                             removeTitle: true
+            //                         },
+            //                         {
+            //                             convertPathData: false
+            //                         }
+            //                     ]
+            //                 }
+            //             }
+            //         }
+            //     ]
+            // },
             {
-                test: /\.(jpe?g|png|gif|svg)$/i,
-                loader: [
-                    'url-loader?limit=10000',
+                test: /\.(jpe?g|png|gif|svg|ttf|eot)$/i,
+                use: [
                     {
-                        loader: 'img-loader',
+                        loader:  'file-loader',
                         options: {
-                            // enabled: process.env.NODE_ENV === 'production',
-                            gifsicle: {
-                                interlaced: false
-                            },
-                            mozjpeg: {
-                                progressive: true,
-                                arithmetic: false
-                            },
-                            optipng: true, // disabled
-                            pngquant: {
-                                floyd: 0.5,
-                                speed: 2
-                            },
-                            svgo: {
-                                plugins: [{
-                                        removeTitle: true
-                                    },
-                                    {
-                                        convertPathData: false
-                                    }
-                                ]
-                            }
+                            outputPath: `${packageName}/${widgetFolder}/ui/`,
+                            publicPath: `${packageName}/${widgetFolder}/ui/` // <-- Fix this name so it will point to the widgets folder ui. Tricky in Mendix
                         }
                     }
                 ]

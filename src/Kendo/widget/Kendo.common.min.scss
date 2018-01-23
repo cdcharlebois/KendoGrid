@@ -11022,8 +11022,9 @@ div.k-navigator .k-navigator-w {
 
 @font-face {
     font-family: WebComponentsIcons;
-    src: url(fonts/glyphs/WebComponentsIcons.eot?gedxeo);
-    src: url(fonts/glyphs/WebComponentsIcons.eot?gedxeo#iefix) format('embedded-opentype'), url(fonts/glyphs/WebComponentsIcons.ttf?gedxeo) format('truetype'), url(fonts/glyphs/WebComponentsIcons.woff?gedxeo) format('woff'), url(fonts/glyphs/WebComponentsIcons.svg?gedxeo#WebComponentsIcons) format('svg');
+    src: url(fonts/glyphs/WebComponentsIcons.svg?gedxeo#WebComponentsIcons);
+    // src: url(fonts/glyphs/WebComponentsIcons.eot?gedxeo);
+    // src: url(fonts/glyphs/WebComponentsIcons.eot?gedxeo#iefix) format('embedded-opentype'), url(fonts/glyphs/WebComponentsIcons.ttf?gedxeo) format('truetype'), url(fonts/glyphs/WebComponentsIcons.woff?gedxeo) format('woff'), url(fonts/glyphs/WebComponentsIcons.svg?gedxeo#WebComponentsIcons) format('svg');
     font-weight: 400;
     font-style: normal
 }
