@@ -23,6 +23,92 @@ export default defineWidget('Grid', false, {
     constructor() {
         this.log = log.bind(this);
         this.runCallback = runCallback.bind(this);
+        /**
+         * Array.from polyfill
+         * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from#Polyfill
+         */
+        // Production steps of ECMA-262, Edition 6, 22.1.2.1
+        if (!Array.from) {
+            Array.from = (function() {
+                const toStr = Object.prototype.toString;
+                const isCallable = function(fn) {
+                    return 'function' === typeof fn || '[object Function]' === toStr.call(fn);
+                };
+                const toInteger = function(value) {
+                    const number = Number(value);
+                    if (isNaN(number)) {
+                        return 0;
+                    }
+                    if (0 === number || !isFinite(number)) {
+                        return number;
+                    }
+                    return (0 < number ? 1 : -1) * Math.floor(Math.abs(number));
+                };
+                const maxSafeInteger = Math.pow(2, 53) - 1;
+                const toLength = function(value) {
+                    const len = toInteger(value);
+                    return Math.min(Math.max(len, 0), maxSafeInteger);
+                };
+
+                // The length property of the from method is 1.
+                return function from(arrayLike /*, mapFn, thisArg */ ) {
+                    // 1. Let C be the this value.
+                    const C = this;
+
+                    // 2. Let items be ToObject(arrayLike).
+                    const items = Object(arrayLike);
+
+                    // 3. ReturnIfAbrupt(items).
+                    if (null == arrayLike) {
+                        throw new TypeError('Array.from requires an array-like object - not null or undefined');
+                    }
+
+                    // 4. If mapfn is undefined, then let mapping be false.
+                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
+                    let T;
+                    if ('undefined' !== typeof mapFn) {
+                        // 5. else
+                        // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                        if (!isCallable(mapFn)) {
+                            throw new TypeError('Array.from: when provided, the second argument must be a function');
+                        }
+
+                        // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                        if (2 < arguments.length) {
+                            T = arguments[ 2 ];
+                        }
+                    }
+
+                    // 10. Let lenValue be Get(items, "length").
+                    // 11. Let len be ToLength(lenValue).
+                    const len = toLength(items.length);
+
+                    // 13. If IsConstructor(C) is true, then
+                    // 13. a. Let A be the result of calling the [[Construct]] internal method
+                    // of C with an argument list containing the single item len.
+                    // 14. a. Else, Let A be ArrayCreate(len).
+                    const A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+                    // 16. Let k be 0.
+                    let k = 0;
+                    // 17. Repeat, while k < len… (also steps a - h)
+                    let kValue;
+                    while (k < len) {
+                        kValue = items[ k ];
+                        if (mapFn) {
+                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                        } else {
+                            A[ k ] = kValue;
+                        }
+                        k += 1;
+                    }
+                    // 18. Let putStatus be Put(A, "length", len, true).
+                    A.length = len;
+                    // 20. Return A.
+                    return A;
+                };
+            })();
+        }
     },
 
     postCreate() {
@@ -130,11 +216,14 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
+                    const target = path[ path.length - 2 ];
+                    const attr = path[ path.length - 1 ];
+                    const links = path.slice(0, path.length - 2);
+                    const revLinks = links.reverse().join("/");
                     mx.data.get({
-                        guid: mxobj.getGuid(),
-                        path: path[ 0 ],
+                        xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                         callback: obj => {
-                            row[ column.caption.split(" ").join("_") ] = obj[ 0 ].get(path[ 2 ]);
+                            row[ column.caption.split(" ").join("_") ] = obj[ 0 ].get(attr);
                             resolve();
                         },
                     });
