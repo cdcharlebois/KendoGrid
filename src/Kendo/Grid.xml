@@ -33,12 +33,18 @@
               <description>Even if you choose to do a "page" type cell, still choose an attribute so we can sort it properly.</description>
               <attributeTypes>
                 <attributeType name="String" />
+                <attributeType name="Integer" />
               </attributeTypes>
             </property>
             <property key="form" type="form" required="false">
               <caption>Page</caption>
               <category>General</category>
               <description>Use this for a custom cell rendering.</description>
+            </property>
+            <property key="headerTemplate" type="string" required="false">
+              <caption>Header Template</caption>
+              <category>General</category>
+              <description>use `#= sum #` to reference an aggregate. Available aggregates are: sum, count, max, min, average.</description>
             </property>
           </properties>
         </property>

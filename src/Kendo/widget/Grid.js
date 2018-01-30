@@ -121,6 +121,7 @@ export default defineWidget('Grid', false, {
             .then(objs => {
                 const self = this;
                 $(gridNode).kendoGrid({
+                    toolbar: ["excel"],
                     dataSource: objs,
                     height: 550,
                     groupable: true,
@@ -137,6 +138,9 @@ export default defineWidget('Grid', false, {
                     group: self.loadPages,
                     sort: self.loadPages,
                     page: self.loadPages,
+                    excelExport: function(e) {
+                        e.workbook.fileName = "Grid.xlsx";
+                    },
                 });
                 this.loadPages();
             });
@@ -174,6 +178,8 @@ export default defineWidget('Grid', false, {
                 template: "page" === column.cellType ? "<div class='mx-formcell' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : undefined,
                 field: column.caption.split(" ").join("_"),
                 title: column.caption,
+                aggregates: ["average", "sum", "max", "min", "count"],
+                groupHeaderTemplate: column.headerTemplate,
             };
         });
     },
