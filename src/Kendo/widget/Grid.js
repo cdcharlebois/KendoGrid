@@ -64,7 +64,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -75,7 +75,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[ 2 ];
+                            T = arguments[2];
                         }
                     }
 
@@ -94,11 +94,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[ k ];
+                        kValue = items[k];
                         if (mapFn) {
-                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[ k ] = kValue;
+                            A[k] = kValue;
                         }
                         k += 1;
                     }
@@ -124,7 +124,9 @@ export default defineWidget('Grid', false, {
                     dataSource: objs,
                     height: 550,
                     groupable: true,
-                    sortable: true,
+                    sortable: {
+                        mode: "multiple",
+                    },
                     pageable: {
                         // refresh: true,
                         pageSize: self.pageSize,
@@ -216,19 +218,19 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const target = path[ path.length - 2 ];
-                    const attr = path[ path.length - 1 ];
+                    const target = path[path.length - 2];
+                    const attr = path[path.length - 1];
                     const links = path.slice(0, path.length - 2);
                     const revLinks = links.reverse().join("/");
                     mx.data.get({
                         xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                         callback: obj => {
-                            row[ column.caption.split(" ").join("_") ] = obj[ 0 ].get(attr);
+                            row[column.caption.split(" ").join("_")] = obj[0].get(attr);
                             resolve();
                         },
                     });
                 } else {
-                    row[ column.caption.split(" ").join("_") ] = mxobj.get(column.attribute);
+                    row[column.caption.split(" ").join("_")] = mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
