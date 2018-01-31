@@ -114,7 +114,7 @@ export default defineWidget('Grid', false, {
     postCreate() {
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         const gridNode = document.createElement("div");
-        gridNode.id = "grid";
+        gridNode.className = "mx-kendo-grid";
         this.domNode.parentElement.appendChild(gridNode);
         const columnSettings = this.prepareColumns();
         this.gatherData()

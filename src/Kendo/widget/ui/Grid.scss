@@ -17,3 +17,10 @@
     line-height: 32px;
     padding-left: 3px;
 }
+
+.mx-kendo-grid {
+    .k-grid-content.k-auto-scrollable,
+    .k-grid {
+        height: auto !important;
+    }
+}
