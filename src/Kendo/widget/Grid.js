@@ -112,6 +112,18 @@ export default defineWidget('Grid', false, {
     },
 
     postCreate() {
+        const cover = document.createElement("div");
+        cover.style.height = "100vh";
+        cover.style.width = "100vw";
+        cover.style.position = "absolute";
+        cover.style.backgroundColor = "#a9a9a9";
+        cover.style.zIndex = "+1";
+        cover.style.display = "none";
+        cover.style.backgroundImage = "url(/widgets/Kendo/widget/ui/155b4f2….gif);";
+        cover.style.backgroundPosition = "center";
+        cover.style.backgroundRepeat = "no-repeat";
+        document.body.appendChild(cover);
+        this.cover = cover;
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         const gridNode = document.createElement("div");
         gridNode.className = "mx-kendo-grid";
@@ -140,11 +152,14 @@ export default defineWidget('Grid', false, {
                         pageSize: self.pageSize,
                         // buttonCount: 5,
                     },
+                    reorderable: true,
+                    resizable: true,
+                    columnMenu: true,
                     columns: columnSettings,
-                    filter: self.loadPages,
-                    group: self.loadPages,
-                    sort: self.loadPages,
-                    page: self.loadPages,
+                    filter: self.loadPages.bind(self),
+                    group: self.loadPages.bind(self),
+                    sort: self.loadPages.bind(self),
+                    page: self.loadPages.bind(self),
 
                 });
                 this.loadPages();
@@ -152,6 +167,7 @@ export default defineWidget('Grid', false, {
     },
 
     loadPages() {
+        this.cover.style.display = "block";
         setTimeout(() => {
             const els = document.querySelectorAll(".mx-formcell");
             Promise.all(Array.from(els).map(cell => {
@@ -172,7 +188,9 @@ export default defineWidget('Grid', false, {
                     });
 
                 });
-            }));
+            })).then(() => {
+                this.cover.style.display = "none";
+            });
         }, 0);
 
     },
@@ -180,11 +198,14 @@ export default defineWidget('Grid', false, {
     prepareColumns() {
         return this.columns.map(column => {
             return {
-                template: "page" === column.cellType ? "<div class='mx-formcell' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : undefined,
+                template: "page" === column.cellType ? "<div class='mx-formcell #: classname #' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : "<div data-mxid='#: mxid #' class='#: classname #'>#: " + column.caption.split(" ").join("_") + " #</div>",
                 field: column.caption.split(" ").join("_"),
                 title: column.caption,
                 aggregates: ["average", "sum", "max", "min", "count"],
                 groupHeaderTemplate: column.headerTemplate,
+                filterable: column.filterMulti ? {
+                    multi: true,
+                } : undefined,
             };
         });
     },
@@ -202,6 +223,7 @@ export default defineWidget('Grid', false, {
                             const rowPromises = this.getPromisesForRow(row, mxobj);
                             rowPromises.unshift(new Promise(resolveid => {
                                 row.mxid = mxobj.getGuid();
+                                row.classname = mxobj.get("classname");
                                 resolveid();
                             }));
                             Promise.all(rowPromises).then(() => {

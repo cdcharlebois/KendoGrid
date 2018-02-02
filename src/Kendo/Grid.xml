@@ -34,6 +34,7 @@
               <attributeTypes>
                 <attributeType name="String" />
                 <attributeType name="Integer" />
+                <attributeType name="Enum" />
               </attributeTypes>
             </property>
             <property key="form" type="form" required="false">
@@ -45,6 +46,11 @@
               <caption>Header Template</caption>
               <category>General</category>
               <description>use `#= sum #` to reference an aggregate. Available aggregates are: sum, count, max, min, average.</description>
+            </property>
+            <property key="filterMulti" type="boolean" defaultValue="false">
+              <caption>Multi-Select Filter</caption>
+              <category>General</category>
+              <description>Useful for Enumerations or string fields with a small number of unique values.</description>
             </property>
           </properties>
         </property>
