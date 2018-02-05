@@ -6,9 +6,10 @@ import {
 import $ from 'jquery';
 window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
 import '@progress/kendo-ui';
+import '@progress/kendo-ui/css/web/kendo.material.min.css';
 import './ui/Grid.scss';
 import './ui/Kendo.common.min.scss';
-import './ui/Kendo.default.min.scss';
+// import './ui/Kendo.default.min.scss';
 
 
 export default defineWidget('Grid', false, {
@@ -19,6 +20,7 @@ export default defineWidget('Grid', false, {
     entity: null,
     columns: null,
     pageSize: null,
+    offsreenRoot: document.createElement("div"),
 
     constructor() {
         this.log = log.bind(this);
@@ -64,7 +66,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -75,7 +77,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[ 2 ];
+                            T = arguments[2];
                         }
                     }
 
@@ -94,11 +96,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[ k ];
+                        kValue = items[k];
                         if (mapFn) {
-                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[ k ] = kValue;
+                            A[k] = kValue;
                         }
                         k += 1;
                     }
@@ -112,37 +114,36 @@ export default defineWidget('Grid', false, {
     },
 
     postCreate() {
-        const cover = document.createElement("div");
-        cover.style.height = "100vh";
-        cover.style.width = "100vw";
-        cover.style.position = "absolute";
-        cover.style.backgroundColor = "#a9a9a9";
-        cover.style.zIndex = "+1";
-        cover.style.display = "none";
-        cover.style.backgroundImage = "url(/widgets/Kendo/widget/ui/155b4f2….gif);";
-        cover.style.backgroundPosition = "center";
-        cover.style.backgroundRepeat = "no-repeat";
-        document.body.appendChild(cover);
+        const cover = document.createElement("div"),
+            loader = document.createElement("div");
+        loader.className = "loader";
+        cover.className = "mx-loading-cover";
+        cover.appendChild(loader);
+        // document.body.appendChild(cover);
         this.cover = cover;
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         const gridNode = document.createElement("div");
         gridNode.className = "mx-kendo-grid";
-        this.domNode.parentElement.appendChild(gridNode);
+        this.domNode.appendChild(gridNode);
+        this.domNode.appendChild(cover);
         const columnSettings = this.prepareColumns();
         this.gatherData()
             .then(objs => {
                 const self = this;
                 $(gridNode).kendoGrid({
-                    toolbar: ["excel"],
-                    excel: {
-                        fileName: "Kendo UI Grid Export.xlsx",
-                        filterable: true,
-                    },
+                    toolbar: [{
+                        name: "showConfig",
+                        text: "Show Config",
+                    }],
+                    // excel: {
+                    //     fileName: "Kendo UI Grid Export.xlsx",
+                    //     filterable: true,
+                    // },
                     dataSource: objs,
-                    height: 550,
+                    // height: 550,
                     groupable: true,
                     filterable: {
-                        mode: "menu, row",
+                        mode: "menu",
                     },
                     sortable: {
                         mode: "multiple",
@@ -163,6 +164,9 @@ export default defineWidget('Grid', false, {
 
                 });
                 this.loadPages();
+                $(gridNode).find('.k-grid-showConfig').on('click', function(e) {
+                    console.log($(gridNode).data("kendoGrid").options);
+                }).bind(self);
             });
     },
 
@@ -197,8 +201,12 @@ export default defineWidget('Grid', false, {
 
     prepareColumns() {
         return this.columns.map(column => {
+            const columnKey = column.caption.split(" ").join("_");
             return {
                 template: "page" === column.cellType ? "<div class='mx-formcell #: classname #' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : "<div data-mxid='#: mxid #' class='#: classname #'>#: " + column.caption.split(" ").join("_") + " #</div>",
+                // template: function(rowObject) {
+                //     return `<div data-mxid='${rowObject.mxid}' class='${rowObject.classname}'>${rowObject[ columnKey ]}</div>`;
+                // },
                 field: column.caption.split(" ").join("_"),
                 title: column.caption,
                 aggregates: ["average", "sum", "max", "min", "count"],
@@ -247,30 +255,39 @@ export default defineWidget('Grid', false, {
     getPromisesForRow(row, mxobj) {
         return this.columns.map(column => {
             return new Promise(resolve => {
+                const columnKey = column.caption.split(" ").join("_");
                 // if ("attr" === column.cellType) {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const target = path[ path.length - 2 ];
-                    const attr = path[ path.length - 1 ];
+                    const target = path[path.length - 2];
+                    const attr = path[path.length - 1];
                     const links = path.slice(0, path.length - 2);
                     const revLinks = links.reverse().join("/");
                     mx.data.get({
                         xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                         callback: obj => {
-                            row[ column.caption.split(" ").join("_") ] = obj[ 0 ].get(attr);
+                            row[columnKey] = obj[0].get(attr);
                             resolve();
                         },
                     });
                 } else {
-                    row[ column.caption.split(" ").join("_") ] = mxobj.get(column.attribute);
+                    row[columnKey] = mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
-                //     // the pages are rendered after the grid is fully loaded so nothing to do here.
-                //     resolve();
+                //     // render the page
+                //     const ctx = new mendix.lib.MxContext();
+                //     ctx.setTrackObject(mxobj);
+                //     mx.ui.openForm(column.form, {
+                //         domNode: this.offsreenRoot, // something
+                //         context: ctx,
+                //         callback: form => {
+                //             row[columnKey] = form.domNode.innerHTML;
+                //             resolve();
+                //         },
+                //     });
                 // }
-
             });
         });
     },
