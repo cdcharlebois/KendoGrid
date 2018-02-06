@@ -69,7 +69,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -80,7 +80,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[2];
+                            T = arguments[ 2 ];
                         }
                     }
 
@@ -99,11 +99,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[k];
+                        kValue = items[ k ];
                         if (mapFn) {
-                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[k] = kValue;
+                            A[ k ] = kValue;
                         }
                         k += 1;
                     }
@@ -117,19 +117,19 @@ export default defineWidget('Grid', false, {
     },
 
     postCreate() {
-        const cover = document.createElement("div"),
-            loader = document.createElement("div");
-        loader.className = "loader";
-        cover.className = "mx-loading-cover";
-        cover.appendChild(loader);
-        // document.body.appendChild(cover);
-        this.cover = cover;
+        // const cover = document.createElement("div"),
+        //     loader = document.createElement("div");
+        // loader.className = "loader";
+        // cover.className = "mx-loading-cover";
+        // cover.appendChild(loader);
+        // // document.body.appendChild(cover);
+        // this.cover = cover;
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         const gridNode = document.createElement("div");
         gridNode.className = "mx-kendo-grid";
         this._gridNode = gridNode;
         this.domNode.appendChild(this._gridNode);
-        this.domNode.appendChild(cover);
+        // this.domNode.appendChild(cover);
         const columnSettings = this.prepareColumns();
         const toolbarSettings = this.prepareButtons();
         toolbarSettings.push({
@@ -166,18 +166,32 @@ export default defineWidget('Grid', false, {
                     group: self.loadPages.bind(self),
                     sort: self.loadPages.bind(self),
                     page: self.loadPages.bind(self),
-                    dataBound: self.styleRows.bind(self),
+                    // dataBound: self.styleRows.bind(self),
 
                 });
                 this._kendoGrid = $(this._gridNode).data("kendoGrid");
                 this.loadPages();
+                this.styleRows();
                 this.attachButtonListeners();
                 this.resetSubscriptions();
+                $(this._gridNode).find("table").on("dblclick", function(e) {
+                    const $clicked = $(e.target).closest("tr");
+                    const guid = this._kendoGrid.dataItem($clicked).mxid;
+                    mx.data.action({
+                        params: {
+                            actionname: this.defaultMicroflow,
+                            guids: [guid],
+                            applyto: "selection",
+                        },
+                        callback: () => {},
+                    });
+                }.bind(self));
             });
     },
 
     loadPages() {
-        this.cover.style.display = "block";
+        // this.cover.style.display = "block";
+        $(this._gridNode).addClass("mx-blurry");
         setTimeout(() => {
             const els = document.querySelectorAll(".mx-formcell");
             Promise.all(Array.from(els).map(cell => {
@@ -199,7 +213,9 @@ export default defineWidget('Grid', false, {
 
                 });
             })).then(() => {
-                this.cover.style.display = "none";
+                // this.cover.style.display = "none";
+                $(this._gridNode).removeClass("mx-blurry");
+                this.styleRows();
             });
         }, 0);
 
@@ -227,8 +243,19 @@ export default defineWidget('Grid', false, {
     gatherData() {
         return new Promise((resolve, reject) => {
             const dataset = [];
+            const xrefs = {};
+            this.columns.forEach(column => {
+                if (3 === column.attribute.split("/").length) {
+                    const xref = column.attribute.split("/")[ 0 ];
+                    // one-hop attr --> add to xrefs
+                    xrefs[ xref ] = {};
+                }
+            });
             mx.data.get({
                 xpath: "//" + this.entity + this.constraint,
+                filter: {
+                    references: xrefs,
+                },
                 callback: objs => {
                     const allPromises = objs.map(mxobj => {
                         return new Promise(resolveInner => {
@@ -267,19 +294,28 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const target = path[path.length - 2];
-                    const attr = path[path.length - 1];
-                    const links = path.slice(0, path.length - 2);
-                    const revLinks = links.reverse().join("/");
-                    mx.data.get({
-                        xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
-                        callback: obj => {
-                            row[columnKey] = obj[0].get(attr);
-                            resolve();
-                        },
-                    });
+                    const attr = path[ path.length - 1 ];
+                    if (3 === path.length) {
+                        // one-hop --> use local obj
+                        const xref = path[ 0 ];
+                        row[ columnKey ] = mxobj.getChildren(xref)[ 0 ].get(attr);
+                        resolve();
+                    } else {
+                        const target = path[ path.length - 2 ];
+                        const links = path.slice(0, path.length - 2);
+                        const revLinks = links.reverse().join("/");
+                        mx.data.get({
+                            xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
+                            callback: obj => {
+                                row[ columnKey ] = obj[ 0 ].get(attr);
+                                resolve();
+                            },
+                        });
+                    }
+
                 } else {
-                    row[columnKey] = mxobj.get(column.attribute);
+                    const attrType = mxobj.metaData.getAttributeType(column.attribute);
+                    row[ columnKey ] = "Integer" === attrType ? mxobj.get(column.attribute) * 1 : mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
@@ -313,18 +349,6 @@ export default defineWidget('Grid', false, {
         $(this._gridNode).find('.k-grid-showConfig').on('click', function(e) {
             console.log(this._kendoGrid.getOptions());
             mx.ui.info("The grid configuration has been logged to the browser console.", false);
-        }.bind(self));
-        $(this._gridNode).find("table").on("dblclick", function(e) {
-            const $clicked = $(e.target).closest("tr");
-            const guid = this._kendoGrid.dataItem($clicked).mxid;
-            mx.data.action({
-                params: {
-                    actionname: this.defaultMicroflow,
-                    guids: [guid],
-                    applyto: "selection",
-                },
-                callback: () => {},
-            });
         }.bind(self));
         $(this._gridNode).find(".k-button").on("click", e => {
             const buttonClicked = e.target.innerText;
@@ -360,28 +384,29 @@ export default defineWidget('Grid', false, {
      * @author Conner Charlebois
      * @since Feb 5, 2018
      */
-    styleRows(event) {
+    styleRows() {
         // get the index of the UnitsInStock cell
         // const columns = event.sender.columns;
-        const dataItems = event.sender.dataSource.view();
-        if (dataItems[0].items && "undefined" !== dataItems.hasSubgroups) {
+        const dataItems = this._kendoGrid.dataSource.view();
+        if (dataItems[ 0 ].items && "undefined" !== dataItems.hasSubgroups) {
             // it's a group
             return;
         }
 
         dataItems.forEach(item => {
             // do something
-            const row = event.sender.tbody.find("[data-uid='" + item.uid + "']");
-            mx.data.action({
-                params: {
-                    actionname: this.classAssignmentMicroflow,
-                    guids: [item.mxid],
-                    applyto: "selection",
-                },
-                callback: className => {
-                    row.addClass(className);
-                },
-            });
+            const row = $(this._gridNode).find("[data-uid='" + item.uid + "']");
+            // mx.data.action({
+            //     params: {
+            //         actionname: this.classAssignmentMicroflow,
+            //         guids: [item.mxid],
+            //         applyto: "selection",
+            //     },
+            //     callback: className => {
+            //         row.addClass(className);
+            //     },
+            // });
+            row.addClass(item.classname);
 
         });
     },
@@ -393,16 +418,33 @@ export default defineWidget('Grid', false, {
         //     filter: this._kendoGrid.getOptions().filter(),
         //     group: this._kendoGrid.getOptions().group(),
         // };
-        this._gridState = this._kendoGrid.getOptions();
+        this._gridState = {
+            sort: this._kendoGrid.getOptions().dataSource.sort,
+            filter: this._kendoGrid.getOptions().dataSource.filter,
+            group: this._kendoGrid.getOptions().dataSource.group,
+            page: this._kendoGrid.getOptions().dataSource.page,
+            pageSize: this._kendoGrid.getOptions().dataSource.pageSize,
+        };
         this.gatherData()
             .then(objs => {
                 const dataSource = new kendo.data.DataSource({
                     data: objs,
                 });
+                dataSource.sort(this._gridState.sort);
+                dataSource.filter(this._gridState.filter);
+                dataSource.group(this._gridState.group);
+                dataSource.page(this._gridState.page);
+                dataSource.pageSize(this._gridState.pageSize);
                 this._kendoGrid.setDataSource(dataSource);
-                this._kendoGrid.setOptions(this._gridState);
+                // this._kendoGrid.dataSource.sort(this._gridState.sort);
+                // this._kendoGrid.dataSource.filter(this._gridState.filter);
+                // this._kendoGrid.dataSource.group(this._gridState.group);
+                // this._kendoGrid.dataSource.page(this._gridState.page);
+                // this._kendoGrid.dataSource.pageSize(this._gridState.pageSize);
+                // this._kendoGrid.refresh();
+                // this._kendoGrid.setOptions(this._gridState);
                 this.loadPages();
-                this.attachButtonListeners();
+                this.styleRows();
             });
     },
 
