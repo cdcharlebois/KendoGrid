@@ -8,6 +8,11 @@
           <category>General</category>
           <description>The Entity to show in the Grid</description>
         </property>
+        <property key="constraint" type="entityConstraint" entityProperty="entity" required="false">
+          <caption>Xpath</caption>
+          <category>General</category>
+          <description>Xpath query to restrict the results of the Grid</description>
+        </property>
         <property key="columns" type="object" isList="true" required="true">
           <caption>Columns</caption>
           <category>General</category>
@@ -58,6 +63,30 @@
          <caption>Page Size</caption>
           <category>General</category>
           <description>Number of Records per Page</description>
+        </property>
+        <property key="buttons" type="object" isList="true" required="false">
+          <caption>Buttons</caption>
+          <category>Behavior</category>
+          <description></description>
+          <properties>
+            <property key="buttonText" type="string" required="true">
+              <caption>Text</caption>
+              <category>General</category>
+              <description></description>
+            </property>
+            <property key="buttonMicroflow" type="microflow" required="false" entityProperty="../entity">
+              <caption>Microflow</caption>
+              <category>General</category>
+              <description></description>
+              <returnType type="Void" />
+            </property>
+          </properties>
+        </property>
+        <property key="classAssignmentMicroflow" type="microflow" entityProperty="entity" required="false">
+          <caption>Class Assignment</caption>
+          <category>Appearance</category>
+          <description>Microflow that is called to determine what class to give to a row.</description>
+          <returnType type="String" />
         </property>
     </properties>
 </widget>

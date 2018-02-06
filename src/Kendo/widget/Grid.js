@@ -19,6 +19,8 @@ export default defineWidget('Grid', false, {
     //modeler
     entity: null,
     columns: null,
+    buttons: null,
+    microflows: null,
     pageSize: null,
     offsreenRoot: document.createElement("div"),
 
@@ -66,7 +68,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -77,7 +79,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[2];
+                            T = arguments[ 2 ];
                         }
                     }
 
@@ -96,11 +98,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[k];
+                        kValue = items[ k ];
                         if (mapFn) {
-                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[k] = kValue;
+                            A[ k ] = kValue;
                         }
                         k += 1;
                     }
@@ -124,17 +126,20 @@ export default defineWidget('Grid', false, {
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         const gridNode = document.createElement("div");
         gridNode.className = "mx-kendo-grid";
-        this.domNode.appendChild(gridNode);
+        this._gridNode = gridNode;
+        this.domNode.appendChild(this._gridNode);
         this.domNode.appendChild(cover);
         const columnSettings = this.prepareColumns();
+        const toolbarSettings = this.prepareButtons();
+        toolbarSettings.push({
+            name: "showConfig",
+            text: "Show Config",
+        });
         this.gatherData()
             .then(objs => {
                 const self = this;
                 $(gridNode).kendoGrid({
-                    toolbar: [{
-                        name: "showConfig",
-                        text: "Show Config",
-                    }],
+                    toolbar: toolbarSettings,
                     // excel: {
                     //     fileName: "Kendo UI Grid Export.xlsx",
                     //     filterable: true,
@@ -149,10 +154,9 @@ export default defineWidget('Grid', false, {
                         mode: "multiple",
                     },
                     pageable: {
-                        // refresh: true,
                         pageSize: self.pageSize,
-                        // buttonCount: 5,
                     },
+                    selectable: true,
                     reorderable: true,
                     resizable: true,
                     columnMenu: true,
@@ -161,12 +165,16 @@ export default defineWidget('Grid', false, {
                     group: self.loadPages.bind(self),
                     sort: self.loadPages.bind(self),
                     page: self.loadPages.bind(self),
+                    dataBound: self.styleRows.bind(self),
 
                 });
                 this.loadPages();
-                $(gridNode).find('.k-grid-showConfig').on('click', function(e) {
-                    console.log($(gridNode).data("kendoGrid").options);
-                }).bind(self);
+                this._kendoGrid = $(this._gridNode).data("kendoGrid");
+                $(this._gridNode).find('.k-grid-showConfig').on('click', function(e) {
+                    console.log(this._kendoGrid.getOptions());
+                    mx.ui.info("The grid configuration has been logged to the browser console.", false);
+                }.bind(self));
+                this.attachButtonListeners();
             });
     },
 
@@ -222,7 +230,7 @@ export default defineWidget('Grid', false, {
         return new Promise((resolve, reject) => {
             const dataset = [];
             mx.data.get({
-                xpath: "//" + this.entity,
+                xpath: "//" + this.entity + this.constraint,
                 callback: objs => {
                     const allPromises = objs.map(mxobj => {
                         return new Promise(resolveInner => {
@@ -231,6 +239,7 @@ export default defineWidget('Grid', false, {
                             const rowPromises = this.getPromisesForRow(row, mxobj);
                             rowPromises.unshift(new Promise(resolveid => {
                                 row.mxid = mxobj.getGuid();
+                                row.mxobj = JSON.stringify(mxobj);
                                 row.classname = mxobj.get("classname");
                                 resolveid();
                             }));
@@ -260,19 +269,19 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const target = path[path.length - 2];
-                    const attr = path[path.length - 1];
+                    const target = path[ path.length - 2 ];
+                    const attr = path[ path.length - 1 ];
                     const links = path.slice(0, path.length - 2);
                     const revLinks = links.reverse().join("/");
                     mx.data.get({
                         xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                         callback: obj => {
-                            row[columnKey] = obj[0].get(attr);
+                            row[ columnKey ] = obj[ 0 ].get(attr);
                             resolve();
                         },
                     });
                 } else {
-                    row[columnKey] = mxobj.get(column.attribute);
+                    row[ columnKey ] = mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
@@ -290,5 +299,84 @@ export default defineWidget('Grid', false, {
                 // }
             });
         });
+    },
+
+    prepareButtons() {
+        return this.buttons.map(button => {
+            return {
+                name: button.buttonText,
+                text: button.buttonText,
+            };
+        });
+    },
+
+    attachButtonListeners() {
+        const self = this;
+        $(this._gridNode).find(".k-button").on("click", e => {
+            const buttonClicked = e.target.innerText;
+            const buttonMatched = this.buttons.find(button => {
+                return button.buttonText === buttonClicked;
+            });
+            if (buttonMatched) {
+                // get context
+                if (0 < self._kendoGrid.select().length) {
+                    const selectedGuid = self._kendoGrid.dataItem(self._kendoGrid.select()).mxid;
+                    mx.data.action({
+                        params: {
+                            actionname: buttonMatched.buttonMicroflow,
+                            guids: [selectedGuid],
+                            applyto: "selection",
+                        },
+                        callback: () => {},
+                    });
+                } else {
+                    console.log("nothing selected");
+                }
+
+
+            }
+        });
+    },
+
+    /**
+     * Style Rows
+     * ---
+     * Styles rows that meet xpath criteria
+     *
+     * @author Conner Charlebois
+     * @since Feb 5, 2018
+     */
+    styleRows(event) {
+        // get the index of the UnitsInStock cell
+        // const columns = event.sender.columns;
+        const dataItems = event.sender.dataSource.view();
+        if (dataItems[ 0 ].items && "undefined" !== dataItems.hasSubgroups) {
+            // it's a group
+            return;
+        }
+
+        dataItems.forEach(item => {
+            // do something
+            const row = event.sender.tbody.find("[data-uid='" + item.uid + "']");
+            mx.data.action({
+                params: {
+                    actionname: this.classAssignmentMicroflow,
+                    guids: [item.mxid],
+                    applyto: "selection",
+                },
+                callback: className => {
+                    row.addClass(className);
+                },
+            });
+
+        });
+        // for (var j = 0; j < dataItems.length; j++) {
+        //     var discontinued = dataItems[j].get("Discontinued");
+
+        //     var row = e.sender.tbody.find("[data-uid='" + dataItems[j].uid + "']");
+        //     if (discontinued) {
+        //         row.addClass("discontinued");
+        //     }
+        // }
     },
 });
