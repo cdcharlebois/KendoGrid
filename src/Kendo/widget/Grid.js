@@ -23,6 +23,7 @@ export default defineWidget('Grid', false, {
     microflows: null,
     pageSize: null,
     offsreenRoot: document.createElement("div"),
+    _gridState: null,
 
     constructor() {
         this.log = log.bind(this);
@@ -68,7 +69,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -79,7 +80,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[ 2 ];
+                            T = arguments[2];
                         }
                     }
 
@@ -98,11 +99,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[ k ];
+                        kValue = items[k];
                         if (mapFn) {
-                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[ k ] = kValue;
+                            A[k] = kValue;
                         }
                         k += 1;
                     }
@@ -168,13 +169,10 @@ export default defineWidget('Grid', false, {
                     dataBound: self.styleRows.bind(self),
 
                 });
-                this.loadPages();
                 this._kendoGrid = $(this._gridNode).data("kendoGrid");
-                $(this._gridNode).find('.k-grid-showConfig').on('click', function(e) {
-                    console.log(this._kendoGrid.getOptions());
-                    mx.ui.info("The grid configuration has been logged to the browser console.", false);
-                }.bind(self));
+                this.loadPages();
                 this.attachButtonListeners();
+                this.resetSubscriptions();
             });
     },
 
@@ -269,19 +267,19 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const target = path[ path.length - 2 ];
-                    const attr = path[ path.length - 1 ];
+                    const target = path[path.length - 2];
+                    const attr = path[path.length - 1];
                     const links = path.slice(0, path.length - 2);
                     const revLinks = links.reverse().join("/");
                     mx.data.get({
                         xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                         callback: obj => {
-                            row[ columnKey ] = obj[ 0 ].get(attr);
+                            row[columnKey] = obj[0].get(attr);
                             resolve();
                         },
                     });
                 } else {
-                    row[ columnKey ] = mxobj.get(column.attribute);
+                    row[columnKey] = mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
@@ -312,6 +310,22 @@ export default defineWidget('Grid', false, {
 
     attachButtonListeners() {
         const self = this;
+        $(this._gridNode).find('.k-grid-showConfig').on('click', function(e) {
+            console.log(this._kendoGrid.getOptions());
+            mx.ui.info("The grid configuration has been logged to the browser console.", false);
+        }.bind(self));
+        $(this._gridNode).find("table").on("dblclick", function(e) {
+            const $clicked = $(e.target).closest("tr");
+            const guid = this._kendoGrid.dataItem($clicked).mxid;
+            mx.data.action({
+                params: {
+                    actionname: this.defaultMicroflow,
+                    guids: [guid],
+                    applyto: "selection",
+                },
+                callback: () => {},
+            });
+        }.bind(self));
         $(this._gridNode).find(".k-button").on("click", e => {
             const buttonClicked = e.target.innerText;
             const buttonMatched = this.buttons.find(button => {
@@ -350,7 +364,7 @@ export default defineWidget('Grid', false, {
         // get the index of the UnitsInStock cell
         // const columns = event.sender.columns;
         const dataItems = event.sender.dataSource.view();
-        if (dataItems[ 0 ].items && "undefined" !== dataItems.hasSubgroups) {
+        if (dataItems[0].items && "undefined" !== dataItems.hasSubgroups) {
             // it's a group
             return;
         }
@@ -370,13 +384,34 @@ export default defineWidget('Grid', false, {
             });
 
         });
-        // for (var j = 0; j < dataItems.length; j++) {
-        //     var discontinued = dataItems[j].get("Discontinued");
+    },
 
-        //     var row = e.sender.tbody.find("[data-uid='" + dataItems[j].uid + "']");
-        //     if (discontinued) {
-        //         row.addClass("discontinued");
-        //     }
-        // }
+    refreshGrid() {
+        // this._gridState = {
+        //     columns: this._kendoGrid.columns,
+        //     sort: this._kendoGrid.getOptions().sort(),
+        //     filter: this._kendoGrid.getOptions().filter(),
+        //     group: this._kendoGrid.getOptions().group(),
+        // };
+        this._gridState = this._kendoGrid.getOptions();
+        this.gatherData()
+            .then(objs => {
+                const dataSource = new kendo.data.DataSource({
+                    data: objs,
+                });
+                this._kendoGrid.setDataSource(dataSource);
+                this._kendoGrid.setOptions(this._gridState);
+                this.loadPages();
+                this.attachButtonListeners();
+            });
+    },
+
+    resetSubscriptions() {
+        this.subscribe({
+            entity: this.entity,
+            callback: entity => {
+                this.refreshGrid();
+            },
+        });
     },
 });
