@@ -1,0 +1,99 @@
+<widget id="Kendo.widget.GridContext" needsEntityContext="true" 
+    xmlns="http://www.mendix.com/widget/1.0/">
+    <name>Kendo Grid (Context)</name>
+    <description>Dummy widget</description>
+    <icon/>
+    <properties>
+        <property key="entity" type="entity" isPath="no" allowNonPersistableEntities="false" required="true">
+            <caption>Entity</caption>
+            <category>General</category>
+            <description>The Entity to show in the Grid</description>
+        </property>
+        <property key="constraint" type="entityConstraint" entityProperty="entity" required="false">
+            <caption>Xpath</caption>
+            <category>General</category>
+            <description>Xpath query to restrict the results of the Grid</description>
+        </property>
+        <property key="columns" type="object" isList="true" required="true">
+            <caption>Columns</caption>
+            <category>General</category>
+            <description></description>
+            <properties>
+                <property key="caption" type="string" required="true">
+                    <caption>Caption</caption>
+                    <category>General</category>
+                    <description></description>
+                </property>
+                <property key="cellType" type="enumeration" defaultValue="attr" required="true">
+                    <caption>Cell Type</caption>
+                    <category>General</category>
+                    <description></description>
+                    <enumerationValues>
+                        <enumerationValue key="attr">Attribute</enumerationValue>
+                        <enumerationValue key="page">Page</enumerationValue>
+                    </enumerationValues>
+                </property>
+                <property key="attribute" type="attribute" entityProperty="../entity" isPath="optional" pathType="reference" required="true">
+                    <caption>Attribute</caption>
+                    <category>General</category>
+                    <description>Even if you choose to do a "page" type cell, still choose an attribute so we can sort it properly.</description>
+                    <attributeTypes>
+                        <attributeType name="String" />
+                        <attributeType name="Integer" />
+                        <attributeType name="Enum" />
+                    </attributeTypes>
+                </property>
+                <property key="form" type="form" required="false">
+                    <caption>Page</caption>
+                    <category>General</category>
+                    <description>Use this for a custom cell rendering.</description>
+                </property>
+                <property key="headerTemplate" type="string" required="false">
+                    <caption>Header Template</caption>
+                    <category>General</category>
+                    <description>use `#= sum #` to reference an aggregate. Available aggregates are: sum, count, max, min, average.</description>
+                </property>
+                <property key="filterMulti" type="boolean" defaultValue="false">
+                    <caption>Multi-Select Filter</caption>
+                    <category>General</category>
+                    <description>Useful for Enumerations or string fields with a small number of unique values.</description>
+                </property>
+            </properties>
+        </property>
+        <property key="pageSize" type="integer" defaultValue="5" required="true">
+            <caption>Page Size</caption>
+            <category>General</category>
+            <description>Number of Records per Page</description>
+        </property>
+        <property key="defaultMicroflow" type="microflow" entityProperty="entity" required="false">
+            <caption>Deafult Microflow</caption>
+            <category>Behavior</category>
+            <description>The default action (required for double-click event)</description>
+            <returnType type="Void" />
+        </property>
+        <property key="buttons" type="object" isList="true" required="false">
+            <caption>Buttons</caption>
+            <category>Behavior</category>
+            <description></description>
+            <properties>
+                <property key="buttonText" type="string" required="true">
+                    <caption>Text</caption>
+                    <category>General</category>
+                    <description></description>
+                </property>
+                <property key="buttonMicroflow" type="microflow" required="false" entityProperty="../entity">
+                    <caption>Microflow</caption>
+                    <category>General</category>
+                    <description></description>
+                    <returnType type="Void" />
+                </property>
+            </properties>
+        </property>
+        <property key="classAssignmentMicroflow" type="microflow" entityProperty="entity" required="false">
+            <caption>Class Assignment</caption>
+            <category>Appearance</category>
+            <description>Microflow that is called to determine what class to give to a row.</description>
+            <returnType type="String" />
+        </property>
+    </properties>
+</widget>

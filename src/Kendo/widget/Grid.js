@@ -9,6 +9,7 @@ import '@progress/kendo-ui';
 import '@progress/kendo-ui/css/web/kendo.material.min.css';
 import './ui/Grid.scss';
 import './ui/Kendo.common.min.scss';
+// import aspect from 'dojo/aspect';
 // import './ui/Kendo.default.min.scss';
 
 
@@ -117,17 +118,10 @@ export default defineWidget('Grid', false, {
     },
 
     postCreate() {
-        // const cover = document.createElement("div"),
-        //     loader = document.createElement("div");
-        // loader.className = "loader";
-        // cover.className = "mx-loading-cover";
-        // cover.appendChild(loader);
-        // // document.body.appendChild(cover);
-        // this.cover = cover;
         log.call(this, 'postCreate', this._WIDGET_VERSION);
-        const gridNode = document.createElement("div");
-        gridNode.className = "mx-kendo-grid";
-        this._gridNode = gridNode;
+        this._gridNode = this._gridNode || document.createElement("div");
+        this._gridNode.className = "mx-kendo-grid";
+        // this._gridNode = gridNode;
         this.domNode.appendChild(this._gridNode);
         // this.domNode.appendChild(cover);
         const columnSettings = this.prepareColumns();
@@ -139,7 +133,7 @@ export default defineWidget('Grid', false, {
         this.gatherData()
             .then(objs => {
                 const self = this;
-                $(gridNode).kendoGrid({
+                $(this._gridNode).kendoGrid({
                     toolbar: toolbarSettings,
                     // excel: {
                     //     fileName: "Kendo UI Grid Export.xlsx",
@@ -170,10 +164,9 @@ export default defineWidget('Grid', false, {
 
                 });
                 this._kendoGrid = $(this._gridNode).data("kendoGrid");
-                this.loadPages();
-                this.styleRows();
+                this.refreshGrid();
                 this.attachButtonListeners();
-                this.resetSubscriptions();
+
                 $(this._gridNode).find("table").on("dblclick", function(e) {
                     const $clicked = $(e.target).closest("tr");
                     const guid = this._kendoGrid.dataItem($clicked).mxid;
@@ -186,7 +179,33 @@ export default defineWidget('Grid', false, {
                         callback: () => {},
                     });
                 }.bind(self));
+                // attach listener to tab container if necessary
+                // if (!this._listenerSet) {
+                // this._tabContainer = this._getNearestTabContainerParent(this);
+                // if (this._tabContainer) {
+                //     // attach listener
+                //     // aspect.after(this._tabContainer, "showTab", this.refreshGrid.bind(this));
+                //     // this._listenerSet = true;
+                // }
+                // }
+
+                // if (callback) {
+                //     callback();
+                // }
             });
+    },
+
+    update(obj, callback) {
+        if (obj) {
+            this._contextObj = obj;
+        }
+        if (this._kendoGrid) {
+            this.refreshGrid();
+        }
+        this.resetSubscriptions();
+        if (callback) {
+            callback();
+        }
     },
 
     loadPages() {
@@ -251,8 +270,19 @@ export default defineWidget('Grid', false, {
                     xrefs[ xref ] = {};
                 }
             });
+            let ctxConstraint = "";
+            if (-1 < this.constraint.indexOf('[%CurrentObject%]')) {
+                ctxConstraint = this._contextObj ?
+                    this.constraint.split("'[%CurrentObject%]'").join("'" + this._contextObj.getGuid() + "'") :
+                    "";
+            } else {
+                ctxConstraint = this.constraint;
+            }
+
+
+
             mx.data.get({
-                xpath: "//" + this.entity + this.constraint,
+                xpath: "//" + this.entity + ctxConstraint,
                 filter: {
                     references: xrefs,
                 },
@@ -388,6 +418,10 @@ export default defineWidget('Grid', false, {
         // get the index of the UnitsInStock cell
         // const columns = event.sender.columns;
         const dataItems = this._kendoGrid.dataSource.view();
+        if (!(dataItems && 0 < dataItems.length)) {
+            // no items
+            return;
+        }
         if (dataItems[ 0 ].items && "undefined" !== dataItems.hasSubgroups) {
             // it's a group
             return;
@@ -455,5 +489,14 @@ export default defineWidget('Grid', false, {
                 this.refreshGrid();
             },
         });
+    },
+
+    _getNearestTabContainerParent(widget) {
+        if (!(widget && widget.declaredClass)) {
+            return null;
+        } else if ("mxui.widget.TabContainer" === widget.declaredClass) {
+            return widget;
+        }
+        return this._getNearestTabContainerParent(widget.getParent());
     },
 });
