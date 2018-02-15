@@ -70,7 +70,7 @@ export default defineWidget('Grid', false, {
                     }
 
                     // 4. If mapfn is undefined, then let mapping be false.
-                    const mapFn = 1 < arguments.length ? arguments[ 1 ] : void undefined;
+                    const mapFn = 1 < arguments.length ? arguments[1] : void undefined;
                     let T;
                     if ('undefined' !== typeof mapFn) {
                         // 5. else
@@ -81,7 +81,7 @@ export default defineWidget('Grid', false, {
 
                         // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
                         if (2 < arguments.length) {
-                            T = arguments[ 2 ];
+                            T = arguments[2];
                         }
                     }
 
@@ -100,11 +100,11 @@ export default defineWidget('Grid', false, {
                     // 17. Repeat, while k < len… (also steps a - h)
                     let kValue;
                     while (k < len) {
-                        kValue = items[ k ];
+                        kValue = items[k];
                         if (mapFn) {
-                            A[ k ] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                            A[k] = 'undefined' === typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
                         } else {
-                            A[ k ] = kValue;
+                            A[k] = kValue;
                         }
                         k += 1;
                     }
@@ -265,11 +265,14 @@ export default defineWidget('Grid', false, {
             const xrefs = {};
             this.columns.forEach(column => {
                 if (3 === column.attribute.split("/").length) {
-                    const xref = column.attribute.split("/")[ 0 ];
+                    const xref = column.attribute.split("/")[0];
                     // one-hop attr --> add to xrefs
-                    xrefs[ xref ] = {};
+                    xrefs[xref] = {};
                 }
             });
+
+            // change the constraint baed on whether or not there's a context object that we need to
+            // point to in the xpath
             let ctxConstraint = "";
             if (-1 < this.constraint.indexOf('[%CurrentObject%]')) {
                 ctxConstraint = this._contextObj ?
@@ -324,20 +327,22 @@ export default defineWidget('Grid', false, {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
-                    const attr = path[ path.length - 1 ];
+                    const attr = path[path.length - 1];
                     if (3 === path.length) {
                         // one-hop --> use local obj
-                        const xref = path[ 0 ];
-                        row[ columnKey ] = mxobj.getChildren(xref)[ 0 ].get(attr);
+                        const xref = path[0];
+                        // CC Feb 13, 2018 fix for empty association
+                        const asscObj = mxobj.getChildren(xref)[0];
+                        row[columnKey] = asscObj && asscObj.get(attr) ? asscObj.get(attr) : "";
                         resolve();
                     } else {
-                        const target = path[ path.length - 2 ];
+                        const target = path[path.length - 2];
                         const links = path.slice(0, path.length - 2);
                         const revLinks = links.reverse().join("/");
                         mx.data.get({
                             xpath: `//${target}[${revLinks} = ${mxobj.getGuid()}]`,
                             callback: obj => {
-                                row[ columnKey ] = obj[ 0 ].get(attr);
+                                row[columnKey] = obj[0].get(attr);
                                 resolve();
                             },
                         });
@@ -345,7 +350,7 @@ export default defineWidget('Grid', false, {
 
                 } else {
                     const attrType = mxobj.metaData.getAttributeType(column.attribute);
-                    row[ columnKey ] = "Integer" === attrType ? mxobj.get(column.attribute) * 1 : mxobj.get(column.attribute);
+                    row[columnKey] = "Integer" === attrType ? mxobj.get(column.attribute) * 1 : mxobj.get(column.attribute);
                     resolve();
                 }
                 // } else {
@@ -422,7 +427,7 @@ export default defineWidget('Grid', false, {
             // no items
             return;
         }
-        if (dataItems[ 0 ].items && "undefined" !== dataItems.hasSubgroups) {
+        if (dataItems[0].items && "undefined" !== dataItems.hasSubgroups) {
             // it's a group
             return;
         }
