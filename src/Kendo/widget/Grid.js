@@ -5,7 +5,10 @@ import {
 } from 'widget-base-helpers';
 import $ from 'jquery';
 window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
-import '@progress/kendo-ui';
+// import '@progress/kendo-ui';
+import '@progress/kendo-ui/js/kendo.core.js';
+import '@progress/kendo-ui/js/kendo.data.js';
+import '@progress/kendo-ui/js/kendo.columnsorter.js';
 import '@progress/kendo-ui/css/web/kendo.material.min.css';
 import './ui/Grid.scss';
 import './ui/Kendo.common.min.scss';

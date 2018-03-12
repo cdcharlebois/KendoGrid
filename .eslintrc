@@ -124,7 +124,7 @@
             "after": true
         }],
         "comma-style": 1,
-        "computed-property-spacing": [2, "always"],
+        // "computed-property-spacing": [2, "always"],
         "eol-last": 1,
         "indent": [1, 4],
         "key-spacing": [1, {
