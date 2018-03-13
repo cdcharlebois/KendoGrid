@@ -5,17 +5,21 @@ import {
 } from 'widget-base-helpers';
 import $ from 'jquery';
 window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
-// import '@progress/kendo-ui';
+// import { $ } from './Libraries';
+// window.$ = $;
+// // import '@progress/kendo-ui';
 import '@progress/kendo-ui/js/kendo.core.js';
 import '@progress/kendo-ui/js/kendo.data.js';
 import '@progress/kendo-ui/js/kendo.columnsorter.js';
+import '@progress/kendo-ui/js/kendo.grid.js';
 import '@progress/kendo-ui/css/web/kendo.material.min.css';
 import './ui/Grid.scss';
-import './ui/Kendo.common.min.scss';
+import './ui/Kendo.common.min.scss'; 
 // import aspect from 'dojo/aspect';
 // import './ui/Kendo.default.min.scss';
+// import "./Libraries";
 
-
+ 
 export default defineWidget('Grid', false, {
 
     _obj: null,
@@ -215,7 +219,7 @@ export default defineWidget('Grid', false, {
         // this.cover.style.display = "block";
         $(this._gridNode).addClass("mx-blurry");
         setTimeout(() => {
-            const els = document.querySelectorAll(".mx-formcell");
+            const els = this._gridNode.querySelectorAll(".mx-formcell");
             Promise.all(Array.from(els).map(cell => {
                 return new Promise(resolve => {
                     mx.data.get({
