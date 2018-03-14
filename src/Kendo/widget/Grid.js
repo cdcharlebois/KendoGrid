@@ -5,21 +5,12 @@ import {
 } from 'widget-base-helpers';
 import $ from 'jquery';
 window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
-// import { $ } from './Libraries';
-// window.$ = $;
-// // import '@progress/kendo-ui';
 import '@progress/kendo-ui/js/kendo.core.js';
 import '@progress/kendo-ui/js/kendo.data.js';
 import '@progress/kendo-ui/js/kendo.columnsorter.js';
 import '@progress/kendo-ui/js/kendo.grid.js';
-import '@progress/kendo-ui/css/web/kendo.material.min.css';
 import './ui/Grid.scss';
-import './ui/Kendo.common.min.scss'; 
-// import aspect from 'dojo/aspect';
-// import './ui/Kendo.default.min.scss';
-// import "./Libraries";
 
- 
 export default defineWidget('Grid', false, {
 
     _obj: null,
@@ -186,19 +177,6 @@ export default defineWidget('Grid', false, {
                         callback: () => {},
                     });
                 }.bind(self));
-                // attach listener to tab container if necessary
-                // if (!this._listenerSet) {
-                // this._tabContainer = this._getNearestTabContainerParent(this);
-                // if (this._tabContainer) {
-                //     // attach listener
-                //     // aspect.after(this._tabContainer, "showTab", this.refreshGrid.bind(this));
-                //     // this._listenerSet = true;
-                // }
-                // }
-
-                // if (callback) {
-                //     callback();
-                // }
             });
     },
 
@@ -360,19 +338,6 @@ export default defineWidget('Grid', false, {
                     row[columnKey] = "Integer" === attrType ? mxobj.get(column.attribute) * 1 : mxobj.get(column.attribute);
                     resolve();
                 }
-                // } else {
-                //     // render the page
-                //     const ctx = new mendix.lib.MxContext();
-                //     ctx.setTrackObject(mxobj);
-                //     mx.ui.openForm(column.form, {
-                //         domNode: this.offsreenRoot, // something
-                //         context: ctx,
-                //         callback: form => {
-                //             row[columnKey] = form.domNode.innerHTML;
-                //             resolve();
-                //         },
-                //     });
-                // }
             });
         });
     },
@@ -482,13 +447,6 @@ export default defineWidget('Grid', false, {
                 dataSource.page(this._gridState.page);
                 dataSource.pageSize(this._gridState.pageSize);
                 this._kendoGrid.setDataSource(dataSource);
-                // this._kendoGrid.dataSource.sort(this._gridState.sort);
-                // this._kendoGrid.dataSource.filter(this._gridState.filter);
-                // this._kendoGrid.dataSource.group(this._gridState.group);
-                // this._kendoGrid.dataSource.page(this._gridState.page);
-                // this._kendoGrid.dataSource.pageSize(this._gridState.pageSize);
-                // this._kendoGrid.refresh();
-                // this._kendoGrid.setOptions(this._gridState);
                 this.loadPages();
                 this.styleRows();
             });
