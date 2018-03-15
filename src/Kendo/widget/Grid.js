@@ -4,7 +4,7 @@ import {
     runCallback,
 } from 'widget-base-helpers';
 import $ from 'jquery';
-window.$ = $; // <-- Can we please remove jQuery? Pretty please? ;-)
+window.$ = $;
 import '@progress/kendo-ui/js/kendo.core.js';
 import '@progress/kendo-ui/js/kendo.data.js';
 import '@progress/kendo-ui/js/kendo.columnsorter.js';
@@ -119,74 +119,56 @@ export default defineWidget('Grid', false, {
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         this._gridNode = this._gridNode || document.createElement("div");
         this._gridNode.className = "mx-kendo-grid";
-        // this._gridNode = gridNode;
         this.domNode.appendChild(this._gridNode);
-        // this.domNode.appendChild(cover);
         const columnSettings = this.prepareColumns();
         const toolbarSettings = this.prepareButtons();
         toolbarSettings.push({
             name: "showConfig",
             text: "Show Config",
         });
-        this.gatherData()
-            .then(objs => {
-                const self = this;
-                $(this._gridNode).kendoGrid({
-                    toolbar: toolbarSettings,
-                    // excel: {
-                    //     fileName: "Kendo UI Grid Export.xlsx",
-                    //     filterable: true,
-                    // },
-                    dataSource: objs,
-                    // height: 550,
-                    groupable: true,
-                    filterable: {
-                        mode: "menu",
-                    },
-                    sortable: {
-                        mode: "multiple",
-                    },
-                    pageable: {
-                        pageSize: self.pageSize,
-                    },
-                    selectable: true,
-                    reorderable: true,
-                    resizable: true,
-                    columnMenu: true,
-                    columns: columnSettings,
-                    filter: self.loadPages.bind(self),
-                    group: self.loadPages.bind(self),
-                    sort: self.loadPages.bind(self),
-                    page: self.loadPages.bind(self),
-                    // dataBound: self.styleRows.bind(self),
+        // * set the default config for the grid (data will be bound later)
+        const self = this;
+        $(this._gridNode).kendoGrid({
+            toolbar: toolbarSettings,
+            groupable: true,
+            filterable: {
+                mode: "menu",
+            },
+            sortable: {
+                mode: "multiple",
+            },
+            pageable: {
+                pageSize: self.pageSize,
+            },
+            selectable: true,
+            reorderable: true,
+            resizable: true,
+            columnMenu: true,
+            columns: columnSettings,
+            filter: self.loadPages.bind(self),
+            group: self.loadPages.bind(self),
+            sort: self.loadPages.bind(self),
+            page: self.loadPages.bind(self),
+        });
+        this._kendoGrid = $(this._gridNode).data("kendoGrid");
+        this.attachButtonListeners();
 
-                });
-                this._kendoGrid = $(this._gridNode).data("kendoGrid");
-                this.refreshGrid();
-                this.attachButtonListeners();
-
-                $(this._gridNode).find("table").on("dblclick", function(e) {
-                    const $clicked = $(e.target).closest("tr");
-                    const guid = this._kendoGrid.dataItem($clicked).mxid;
-                    mx.data.action({
-                        params: {
-                            actionname: this.defaultMicroflow,
-                            guids: [guid],
-                            applyto: "selection",
-                        },
-                        callback: () => {},
-                    });
-                }.bind(self));
+        $(this._gridNode).find("table").on("dblclick", function(e) {
+            const $clicked = $(e.target).closest("tr");
+            const guid = this._kendoGrid.dataItem($clicked).mxid;
+            mx.data.action({
+                params: {
+                    actionname: this.defaultMicroflow,
+                    guids: [guid],
+                    applyto: "selection",
+                },
+                callback: () => {},
             });
+        }.bind(self));
     },
 
     update(obj, callback) {
-        if (obj) {
-            this._contextObj = obj;
-        }
-        if (this._kendoGrid) {
-            this.refreshGrid();
-        }
+        this.refreshGrid();
         this.resetSubscriptions();
         if (callback) {
             callback();
@@ -194,7 +176,6 @@ export default defineWidget('Grid', false, {
     },
 
     loadPages() {
-        // this.cover.style.display = "block";
         $(this._gridNode).addClass("mx-blurry");
         setTimeout(() => {
             const els = this._gridNode.querySelectorAll(".mx-formcell");
@@ -206,7 +187,7 @@ export default defineWidget('Grid', false, {
                             const ctx = new mendix.lib.MxContext();
                             ctx.setTrackObject(mxobj);
                             mx.ui.openForm(cell.dataset.mxform, {
-                                domNode: cell, // something
+                                domNode: cell,
                                 context: ctx,
                                 callback: () => {
                                     resolve();
@@ -217,7 +198,6 @@ export default defineWidget('Grid', false, {
 
                 });
             })).then(() => {
-                // this.cover.style.display = "none";
                 $(this._gridNode).removeClass("mx-blurry");
                 this.styleRows();
             });
@@ -229,10 +209,7 @@ export default defineWidget('Grid', false, {
         return this.columns.map(column => {
             const columnKey = column.caption.split(" ").join("_");
             return {
-                template: "page" === column.cellType ? "<div class='mx-formcell #: classname #' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : "<div data-mxid='#: mxid #' class='#: classname #'>#: " + column.caption.split(" ").join("_") + " #</div>",
-                // template: function(rowObject) {
-                //     return `<div data-mxid='${rowObject.mxid}' class='${rowObject.classname}'>${rowObject[ columnKey ]}</div>`;
-                // },
+                template: "page" === column.cellType ? "<div class='mx-formcell #: classname #' data-mxid='#: mxid #' data-mxform='" + column.form + "'></div>" : "<div data-mxid='#: mxid #' class='#: classname #'>#: " + columnKey + " #</div>",
                 field: column.caption.split(" ").join("_"),
                 title: column.caption,
                 aggregates: ["average", "sum", "max", "min", "count"],
@@ -256,7 +233,7 @@ export default defineWidget('Grid', false, {
                 }
             });
 
-            // change the constraint baed on whether or not there's a context object that we need to
+            // change the constraint based on whether or not there's a context object that we need to
             // point to in the xpath
             let ctxConstraint = "";
             if (-1 < this.constraint.indexOf('[%CurrentObject%]')) {
@@ -266,8 +243,6 @@ export default defineWidget('Grid', false, {
             } else {
                 ctxConstraint = this.constraint;
             }
-
-
 
             mx.data.get({
                 xpath: "//" + this.entity + ctxConstraint,
@@ -308,7 +283,6 @@ export default defineWidget('Grid', false, {
         return this.columns.map(column => {
             return new Promise(resolve => {
                 const columnKey = column.caption.split(" ").join("_");
-                // if ("attr" === column.cellType) {
                 if (-1 < column.attribute.indexOf("/")) {
                     // get from association
                     const path = column.attribute.split("/");
@@ -378,7 +352,6 @@ export default defineWidget('Grid', false, {
                     console.log("nothing selected");
                 }
 
-
             }
         });
     },
@@ -393,7 +366,6 @@ export default defineWidget('Grid', false, {
      */
     styleRows() {
         // get the index of the UnitsInStock cell
-        // const columns = event.sender.columns;
         const dataItems = this._kendoGrid.dataSource.view();
         if (!(dataItems && 0 < dataItems.length)) {
             // no items
@@ -407,28 +379,12 @@ export default defineWidget('Grid', false, {
         dataItems.forEach(item => {
             // do something
             const row = $(this._gridNode).find("[data-uid='" + item.uid + "']");
-            // mx.data.action({
-            //     params: {
-            //         actionname: this.classAssignmentMicroflow,
-            //         guids: [item.mxid],
-            //         applyto: "selection",
-            //     },
-            //     callback: className => {
-            //         row.addClass(className);
-            //     },
-            // });
             row.addClass(item.classname);
 
         });
     },
 
     refreshGrid() {
-        // this._gridState = {
-        //     columns: this._kendoGrid.columns,
-        //     sort: this._kendoGrid.getOptions().sort(),
-        //     filter: this._kendoGrid.getOptions().filter(),
-        //     group: this._kendoGrid.getOptions().group(),
-        // };
         this._gridState = {
             sort: this._kendoGrid.getOptions().dataSource.sort,
             filter: this._kendoGrid.getOptions().dataSource.filter,
