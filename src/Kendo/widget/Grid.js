@@ -115,6 +115,16 @@ export default defineWidget('Grid', false, {
         }
     },
 
+    /**
+     * Lifecycle: PostCreate
+     * ---
+     * - Initialize the Grid and add the appropriate listeners
+     * - Use this to set configuration options
+     * - Data is not bound here--that happens in update
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     postCreate() {
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         this._gridNode = this._gridNode || document.createElement("div");
@@ -153,20 +163,31 @@ export default defineWidget('Grid', false, {
         this._kendoGrid = $(this._gridNode).data("kendoGrid");
         this.attachButtonListeners();
 
-        $(this._gridNode).find("table").on("dblclick", function(e) {
-            const $clicked = $(e.target).closest("tr");
-            const guid = this._kendoGrid.dataItem($clicked).mxid;
-            mx.data.action({
-                params: {
-                    actionname: this.defaultMicroflow,
-                    guids: [guid],
-                    applyto: "selection",
-                },
-                callback: () => {},
-            });
-        }.bind(self));
-    },
+        if (this.defaultMicroflow) {
+            $(this._gridNode).find("table").on("dblclick", function(e) {
+                const $clicked = $(e.target).closest("tr");
+                const guid = this._kendoGrid.dataItem($clicked).mxid;
+                mx.data.action({
+                    params: {
+                        actionname: this.defaultMicroflow,
+                        guids: [guid],
+                        applyto: "selection",
+                    },
+                    callback: () => {},
+                });
+            }.bind(self));
+        }
 
+    },
+    /**
+     * Lifecycle: Update
+     * ---
+     * Called when the widget receives context (or after postcreate if no context)
+     * - Refresh the grid (bind data and pages) and reset subscriptions
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     update(obj, callback) {
         this.refreshGrid();
         this.resetSubscriptions();
@@ -174,7 +195,16 @@ export default defineWidget('Grid', false, {
             callback();
         }
     },
-
+    /**
+     * Private: loadPages
+     * ---
+     * Render all the Mendix pages for the cells with a page as content
+     * - fetch all .formcell nodes inside the grid
+     * - asynchronously render all the pages with the appropriate context
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     loadPages() {
         $(this._gridNode).addClass("mx-blurry");
         setTimeout(() => {
@@ -204,7 +234,17 @@ export default defineWidget('Grid', false, {
         }, 0);
 
     },
-
+    /**
+     * Private: prepareColumns
+     * ---
+     * Generate the metadata for the columns of the grid
+     * - read the widget column properties and map those into kendo columns
+     * - one thing to note: if the cell is a formcell, we add the name of the form and the mendix object's id
+     *     to the cell template as data attributes so that loadPages() can use these values
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     prepareColumns() {
         return this.columns.map(column => {
             const columnKey = column.caption.split(" ").join("_");
@@ -220,7 +260,14 @@ export default defineWidget('Grid', false, {
             };
         });
     },
-
+    /**
+     * Private: gatherData
+     * ---
+     * Asyncronously fetch all the objects that are needed for the grid (comments inline below)
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     gatherData() {
         return new Promise((resolve, reject) => {
             const dataset = [];
@@ -278,7 +325,14 @@ export default defineWidget('Grid', false, {
             });
         });
     },
-
+    /**
+     * Private: getPromisesForRow
+     * ---
+     * Asynchronously set all the properties of the row object for Kendo
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     getPromisesForRow(row, mxobj) {
         return this.columns.map(column => {
             return new Promise(resolve => {
@@ -316,6 +370,14 @@ export default defineWidget('Grid', false, {
         });
     },
 
+    /**
+     * Private: prepareButtons
+     * ---
+     * Add the buttons from the widget properties to the Kendo action bar
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     prepareButtons() {
         return this.buttons.map(button => {
             return {
@@ -325,6 +387,14 @@ export default defineWidget('Grid', false, {
         });
     },
 
+    /**
+     * Private: attachButtonListeners
+     * ---
+     * Attach listeners to the buttons added in `prepareButtons()`
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     attachButtonListeners() {
         const self = this;
         $(this._gridNode).find('.k-grid-showConfig').on('click', function(e) {
@@ -383,7 +453,14 @@ export default defineWidget('Grid', false, {
 
         });
     },
-
+    /**
+     * Private: refreshGrid
+     * ---
+     * Preserve the grid state, then gather the new data, then refresh the grid and load new pages.
+     * 
+     * @author Conner Charlebois
+     * @since Mar 15, 2018
+     */
     refreshGrid() {
         this._gridState = {
             sort: this._kendoGrid.getOptions().dataSource.sort,
@@ -400,29 +477,32 @@ export default defineWidget('Grid', false, {
                 dataSource.sort(this._gridState.sort);
                 dataSource.filter(this._gridState.filter);
                 dataSource.group(this._gridState.group);
-                dataSource.page(this._gridState.page);
                 dataSource.pageSize(this._gridState.pageSize);
                 this._kendoGrid.setDataSource(dataSource);
+                // not sure why the page needs to be set after. Seems like setDataSource() doesn't respect
+                // page() function.
+                this._kendoGrid.dataSource.page(this._gridState.page);
                 this.loadPages();
                 this.styleRows();
             });
     },
 
+    /**
+     * Private: resetSubscriptions
+     * ---
+     * Reset the subscriptions for the widget. 
+     * - entity subscription so if any object changes, the grid refreshes as well
+     * 
+     * @author Conner Charlebois
+     * @since Date (press ⇧⌘I)
+     */
     resetSubscriptions() {
+        this.unsubscribeAll();
         this.subscribe({
             entity: this.entity,
             callback: entity => {
                 this.refreshGrid();
             },
         });
-    },
-
-    _getNearestTabContainerParent(widget) {
-        if (!(widget && widget.declaredClass)) {
-            return null;
-        } else if ("mxui.widget.TabContainer" === widget.declaredClass) {
-            return widget;
-        }
-        return this._getNearestTabContainerParent(widget.getParent());
     },
 });
