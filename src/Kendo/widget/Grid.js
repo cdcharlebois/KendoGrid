@@ -126,6 +126,8 @@ export default defineWidget('Grid', false, {
      * @since Mar 15, 2018
      */
     postCreate() {
+        // this.startTime = new Date();
+        // console.debug(`PostCreate called at ${this.startTime.toLocaleTimeString()} = 0 ms`);
         log.call(this, 'postCreate', this._WIDGET_VERSION);
         this._gridNode = this._gridNode || document.createElement("div");
         this._gridNode.className = "mx-kendo-grid";
@@ -189,6 +191,7 @@ export default defineWidget('Grid', false, {
      * @since Mar 15, 2018
      */
     update(obj, callback) {
+        // console.debug(`Update called at ${new Date() - this.startTime} ms`);
         this.refreshGrid();
         this.resetSubscriptions();
         if (callback) {
@@ -462,6 +465,7 @@ export default defineWidget('Grid', false, {
      * @since Mar 15, 2018
      */
     refreshGrid() {
+        // console.debug(`RefreshGrid called at ${new Date() - this.startTime} ms`);
         this._gridState = {
             sort: this._kendoGrid.getOptions().dataSource.sort,
             filter: this._kendoGrid.getOptions().dataSource.filter,
@@ -484,6 +488,7 @@ export default defineWidget('Grid', false, {
                 this._kendoGrid.dataSource.page(this._gridState.page);
                 this.loadPages();
                 this.styleRows();
+                // console.debug(`RefreshGrid finished at ${new Date() - this.startTime} ms`);
             });
     },
 
