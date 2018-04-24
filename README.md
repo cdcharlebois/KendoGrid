@@ -20,6 +20,7 @@ To style this widget with Kendo Styling, you'll need to follow these steps:
 @import "custom-variables";
 @import "kendo-common";
 ```
+7. Copy the `fonts/`, `images/`, and `textures/` folders from KendoUI into your `/theme/styles/css/custom` directory also.
 
 7. Repeat steps 2 through 6 for any additional themes, i.e. Material:
     - Step 2: find and copy `kendo.material.min.css`
